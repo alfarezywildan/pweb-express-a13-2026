@@ -48,9 +48,9 @@ async function main() {
   // 5. Insert 3 Player bawaan & kepemilikan hero awal
   await prisma.player.createMany({
     data: [
-      { id: 1, nickname: 'ArekITS', bp: 1500, diamond: 75 },
-      { id: 2, nickname: 'SangPushRank', bp: 13000, diamond: 2892 },
-      { id: 3, nickname: 'MageSurabaya', bp: 10000, diamond: 0 }
+      { nickname: 'ArekITS', bp: 1500, diamond: 75 },
+      { nickname: 'SangPushRank', bp: 13000, diamond: 2892 },
+      { nickname: 'MageSurabaya', bp: 10000, diamond: 0 }
     ]
   });
 
