@@ -315,3 +315,88 @@ export const playMatch = async (
     next(error);
   }
 };
+
+// Tambahkan fungsi ini di bagian paling bawah playerController.ts
+export const buyHero = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const playerId = parseInt(req.params.player_id);
+    const { heroId, currency } = req.body;
+
+    // 1. Cek Input Kosong / Format Salah
+    if (!heroId || !currency || (currency !== 'BP' && currency !== 'DIAMOND')) {
+      res.status(400).json({ status: false, message: "heroId wajib diisi dan currency harus BP atau DIAMOND" });
+      return;
+    }
+
+    // 2. Cek Player Ada/Tidak
+    const player = await prisma.player.findUnique({ where: { id: playerId } });
+    if (!player) {
+      res.status(404).json({ status: false, message: "Player tidak ditemukan" });
+      return;
+    }
+
+    // 3. Cek Hero Ada/Tidak
+    const hero = await prisma.hero.findUnique({ where: { id: heroId } });
+    if (!hero) {
+      res.status(404).json({ status: false, message: "Hero tidak ditemukan" });
+      return;
+    }
+
+    // 4. Cek Harga (Null = Tidak Bisa Dibeli dengan Currency Tersebut)
+    const price = currency === 'BP' ? hero.priceBP : hero.priceDiamond;
+    if (price === null) {
+      res.status(400).json({ status: false, message: `Hero tidak bisa dibeli menggunakan ${currency}` });
+      return;
+    }
+
+    // 5. Cek Apakah Player Sudah Punya Hero Ini (Pakai kombinasi Unique)
+    const alreadyOwned = await prisma.playerHero.findUnique({
+      where: { playerId_heroId: { playerId, heroId } }
+    });
+    if (alreadyOwned) {
+      res.status(409).json({ status: false, message: "Player sudah memiliki hero tersebut" });
+      return;
+    }
+
+    // 6. Cek Saldo
+    const balance = currency === 'BP' ? player.bp : player.diamond;
+    if (balance < price) {
+      res.status(400).json({ status: false, message: `Saldo ${currency} tidak cukup` });
+      return;
+    }
+
+    // --- TRANSACTION DATABASE ---
+    const [updatedPlayer, playerHero] = await prisma.$transaction([
+      prisma.player.update({
+        where: { id: playerId },
+        data: currency === 'BP' 
+          ? { bp: { decrement: price } } 
+          : { diamond: { decrement: price } }
+      }),
+      prisma.playerHero.create({
+        data: {
+          playerId,
+          heroId,
+          currency,
+          pricePaid: price
+        },
+        include: { hero: true }
+      })
+    ]);
+
+    // Response 201 Created
+    res.status(201).json({
+      status: true,
+      message: "Berhasil membeli hero",
+      data: {
+        hero: playerHero.hero,
+        currency: playerHero.currency,
+        pricePaid: playerHero.pricePaid,
+        sisaBP: updatedPlayer.bp,
+        sisaDiamond: updatedPlayer.diamond
+      }
+    });
+  } catch (error) {
+    next(error); // Lempar ke Error Handler global punya Orang 2
+  }
+};

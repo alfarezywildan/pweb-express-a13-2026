@@ -6,6 +6,8 @@ import { notFound } from './middlewares/notFound.js';
 import heroRoutes from './routes/heroRoutes.js';
 import playerRoutes from './routes/playerRoutes.js';
 import skinRoutes from './routes/skinRoutes.js';
+import { getStatistics } from './controllers/statisticsController';
+
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -29,10 +31,13 @@ app.get('/health', (_req, res) => {
 app.use('/api/heroes', heroRoutes);
 app.use('/api/skins', skinRoutes);
 app.use('/api/players', playerRoutes);
+app.get('/api/statistics', getStatistics);
 
 // Middleware 404 Not Found & Global Error Handler (Fitur 1)
 app.use(notFound);
 app.use(errorHandler);
+
+app.get('/api/statistics', getStatistics);
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server berjalan di http://localhost:${PORT}`);

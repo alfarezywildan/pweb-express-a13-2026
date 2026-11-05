@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  buyHero,
   createPlayer,
   deletePlayer,
   getPlayerById,
@@ -19,5 +20,6 @@ router.delete('/:player_id', deletePlayer);
 // Fitur 5: Top Up & Match
 router.post('/:player_id/topup', topUpDiamond);
 router.post('/:player_id/matches', playMatch);
+router.post('/:player_id/heroes', buyHero);
 
 export default router;
