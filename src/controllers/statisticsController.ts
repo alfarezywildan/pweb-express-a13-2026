@@ -1,3 +1,4 @@
+import { prisma } from '../lib/prisma.js';
 import { Request, Response, NextFunction } from 'express';
 // TODO: Sesuaikan baris import prisma ini dengan struktur temenmu
 // Contoh: import prisma from '../lib/prisma';
